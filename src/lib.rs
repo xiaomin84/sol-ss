@@ -1,5 +1,6 @@
 #![allow(unexpected_cfgs)]
-#![allow(deprecated)] // system_instruction: migrate to solana_system_interface when ready
+// system_instruction 已弃用，官方建议用 solana_system_interface；但该 crate 与 solana-program 2 类型不兼容（Address vs Pubkey、Instruction 版本不同），故仍使用此处 API 并屏蔽警告
+#![allow(deprecated)]
 
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
