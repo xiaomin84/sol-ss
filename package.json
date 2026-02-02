@@ -1,0 +1,21 @@
+{
+  "name": "pxsol-ss",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cargo build-sbf",
+    "deploy": "tsx scripts/deploy.ts",
+    "deploy:devnet": "tsx scripts/deploy.ts --cluster devnet",
+    "deploy:mainnet": "tsx scripts/deploy.ts --cluster mainnet-beta"
+  },
+  "dependencies": {
+    "@solana/kit": "^5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "dotenv": "^16.6.1",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
