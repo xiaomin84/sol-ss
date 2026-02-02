@@ -9,8 +9,12 @@
     "deploy:devnet": "tsx scripts/deploy.ts --cluster devnet",
     "deploy:mainnet": "tsx scripts/deploy.ts --cluster mainnet-beta",
     "deploy:localhost": "tsx scripts/deploy.ts --cluster localhost",
-    "deploy:help": "tsx scripts/deploy.ts -h"
-
+    "deploy:help": "tsx scripts/deploy.ts -h",
+    "interact": "tsx scripts/interact.ts",
+    "interact:save": "tsx scripts/interact.ts save",
+    "interact:load": "tsx scripts/interact.ts load",
+    "interact:update": "tsx scripts/interact.ts update",
+    "interact:demo": "tsx scripts/interact.ts demo"
   },
   "dependencies": {
     "@solana/kit": "^5"
