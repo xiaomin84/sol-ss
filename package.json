@@ -7,7 +7,10 @@
     "build": "cargo build-sbf",
     "deploy": "tsx scripts/deploy.ts",
     "deploy:devnet": "tsx scripts/deploy.ts --cluster devnet",
-    "deploy:mainnet": "tsx scripts/deploy.ts --cluster mainnet-beta"
+    "deploy:mainnet": "tsx scripts/deploy.ts --cluster mainnet-beta",
+    "deploy:localhost": "tsx scripts/deploy.ts --cluster localhost",
+    "deploy:help": "tsx scripts/deploy.ts -h"
+
   },
   "dependencies": {
     "@solana/kit": "^5"
