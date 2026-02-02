@@ -1,61 +1,75 @@
 #![allow(unexpected_cfgs)]
+#![allow(deprecated)] // system_instruction: migrate to solana_system_interface when ready
 
-use solana_program::sysvar::Sysvar;
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    program::invoke_signed,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    rent::Rent,
+    system_instruction,
+    sysvar::Sysvar,
+};
 
 solana_program::entrypoint!(process_instruction);
 
 pub fn process_instruction(
-    program_id: &solana_program::pubkey::Pubkey,
-    accounts: &[solana_program::account_info::AccountInfo],
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     data: &[u8],
-) -> solana_program::entrypoint::ProgramResult {
+) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let account_user = solana_program::account_info::next_account_info(accounts_iter)?;
-    let account_data = solana_program::account_info::next_account_info(accounts_iter)?;
-    let _ = solana_program::account_info::next_account_info(accounts_iter)?; // Program system
-    let _ = solana_program::account_info::next_account_info(accounts_iter)?; // Program sysvar rent
+    let user_account = next_account_info(accounts_iter)?;
+    let data_account = next_account_info(accounts_iter)?;
+    let _system_program = next_account_info(accounts_iter)?;
+    let _rent_sysvar = next_account_info(accounts_iter)?;
 
-    let rent_exemption = solana_program::rent::Rent::get()?.minimum_balance(data.len());
-    let bump_seed = solana_program::pubkey::Pubkey::find_program_address(&[&account_user.key.to_bytes()], program_id).1;
+    let rent_exemption = Rent::get()?.minimum_balance(data.len());
+    let (pda, bump_seed) =
+        Pubkey::find_program_address(&[user_account.key.as_ref()], program_id);
 
-    // Data account is not initialized. Create an account and write data into it.
-    if **account_data.try_borrow_lamports().unwrap() == 0 {
-        solana_program::program::invoke_signed(
-            &solana_program::system_instruction::create_account(
-                account_user.key,
-                account_data.key,
+    if pda != *data_account.key {
+        return Err(ProgramError::InvalidSeeds);
+    }
+
+    let signer_seeds: &[&[u8]] = &[user_account.key.as_ref(), std::slice::from_ref(&bump_seed)];
+
+    if data_account.lamports() == 0 {
+        invoke_signed(
+            &system_instruction::create_account(
+                user_account.key,
+                data_account.key,
                 rent_exemption,
                 data.len() as u64,
                 program_id,
             ),
             accounts,
-            &[&[&account_user.key.to_bytes(), &[bump_seed]]],
+            &[signer_seeds],
         )?;
-        account_data.data.borrow_mut().copy_from_slice(data);
+        data_account.try_borrow_mut_data()?.copy_from_slice(data);
         return Ok(());
     }
 
-    // Fund the data account to let it rent exemption.
-    if rent_exemption > account_data.lamports() {
+    if rent_exemption > data_account.lamports() {
         solana_program::program::invoke(
-            &solana_program::system_instruction::transfer(
-                account_user.key,
-                account_data.key,
-                rent_exemption - account_data.lamports(),
+            &system_instruction::transfer(
+                user_account.key,
+                data_account.key,
+                rent_exemption - data_account.lamports(),
             ),
             accounts,
         )?;
     }
-    // Withdraw excess funds and return them to users. Since the funds in the pda account belong to the program, we do
-    // not need to use instructions to transfer them here.
-    if rent_exemption < account_data.lamports() {
-        **account_user.lamports.borrow_mut() = account_user.lamports() + account_data.lamports() - rent_exemption;
-        **account_data.lamports.borrow_mut() = rent_exemption;
+
+    if rent_exemption < data_account.lamports() {
+        let excess = data_account.lamports() - rent_exemption;
+        **user_account.lamports.borrow_mut() += excess;
+        **data_account.lamports.borrow_mut() = rent_exemption;
     }
-    // Realloc space.
-    account_data.resize(data.len())?;
-    // Overwrite old data with new data.
-    account_data.data.borrow_mut().copy_from_slice(data);
+
+    data_account.resize(data.len())?;
+    data_account.try_borrow_mut_data()?.copy_from_slice(data);
 
     Ok(())
 }
