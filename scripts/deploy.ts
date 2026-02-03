@@ -24,7 +24,7 @@ const envPath = path.join(ROOT, ".env");
 if (fs.existsSync(envPath)) {
   config({ path: envPath });
 }
-const PROGRAM_SO = path.join(ROOT, "target", "deploy", "pxsol_ss.so");
+const PROGRAM_SO = path.join(ROOT, "target", "deploy", "sol_ss.so");
 
 const DEFAULT_CLUSTER_URLS: Record<string, string> = {
   "mainnet-beta": "https://api.mainnet.solana.com",
