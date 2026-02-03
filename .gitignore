@@ -4,3 +4,19 @@
 *.tsbuildinfo
 .env
 /test-ledger
+
+# Keypair files (security - never commit these!)
+*-keypair.json
+id.json
+keypair.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
